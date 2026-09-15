@@ -1,0 +1,6 @@
+{
+  "name": "TalkNutri - SaaS Nutrição 2.0",
+  "description": "Plataforma Service-as-a-Software para nutrição clínica e esportiva com escuta ambiente, motor de otimização matemática HiGHS e ecossistema Zero-App via WhatsApp.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
