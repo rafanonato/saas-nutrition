@@ -684,6 +684,6 @@ export const INITIAL_COMPLIANCE: ComplianceChecklist = {
   cfn856DeclarationAccepted: true,
   twoFactorToken: 'CFN-AUTH-98421-2026',
   signatureDate: '15/09/2026 14:42',
-  professionalName: 'Dra. Camila Silveira',
+  professionalName: 'Dra. Maithe',
   crnRegistry: 'CRN-3 / 48.912'
 };

@@ -16,7 +16,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 1. Header de Boas-Vindas */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-5">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Bom dia, Dra. Camila</h2>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Bom dia, Dra. Maithe</h2>
           <p className="text-xs text-slate-500">Terça-feira, 15 de Setembro de 2026 • 4 atendimentos agendados hoje</p>
         </div>
         <div className="flex items-center gap-2">

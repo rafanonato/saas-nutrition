@@ -97,9 +97,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
       <div className="mt-auto flex flex-col items-center gap-2">
         <div 
           className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-200 to-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-700 font-semibold text-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
-          title="Dra. Camila Silveira (CRN-3 / 48.912)"
+          title="Dra. Maithe (CRN-3 / 48.912)"
         >
-          DC
+          DM
         </div>
         <span className="text-[10px] font-medium text-slate-400">CRN-3</span>
       </div>

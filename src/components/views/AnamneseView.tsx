@@ -19,7 +19,9 @@ import {
   Check, 
   Mic, 
   HelpCircle,
-  Flame
+  Flame,
+  ShieldCheck,
+  RotateCcw
 } from 'lucide-react';
 import { Biomarker, AnamneseData, DiscrepancyAlert, PatientSummary } from '../../types';
 import { ExamOcrModal } from '../ocr/ExamOcrModal';
@@ -289,15 +291,40 @@ export const AnamneseView: React.FC<AnamneseViewProps> = ({
 
   const handleResolveDiscrepancy = (choice: 'jejum' | 'refeicao') => {
     if (!discrepancy) return;
-    setDiscrepancy(prev => prev ? { ...prev, status: 'resolvido', resolvedChoice: choice } : null);
+    const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    setDiscrepancy(prev => prev ? { 
+      ...prev, 
+      status: 'resolvido', 
+      resolvedChoice: choice,
+      resolvedAt: now,
+      resolvedBy: 'Dra. Maithe (CRN-3 / 48.912)'
+    } : null);
+
     if (choice === 'refeicao') {
-      setMainComplaints(prev => `${prev} [Nota Nutricionista: Paciente mantém desjejum leve às 08h pré-treino, desconsiderando jejum prolongado]`);
+      setMainComplaints(prev => {
+        if (prev.includes('desjejum leve às 08h')) return prev;
+        return `${prev} [Nota Nutricionista: Paciente mantém desjejum leve às 08h pré-treino, desconsiderando jejum prolongado]`;
+      });
+    } else {
+      setMainComplaints(prev => {
+        if (prev.includes('jejum matinal estrito')) return prev;
+        return `${prev} [Nota Nutricionista: Paciente confirmou jejum matinal estrito até 12:30]`;
+      });
     }
+
     if (onDispatchScribeMessage) {
       onDispatchScribeMessage(
-        `Discrepância clínica resolvida pela Dra. Camila Silveira: Optado por ${choice === 'refeicao' ? 'Desjejum às 08:00' : 'Jejum Matinal estrito'}. Prontuário sincronizado.`, 
+        `Discrepância clínica resolvida pela Dra. Maithe: Optado por ${choice === 'refeicao' ? 'Desjejum às 08:00' : 'Jejum Matinal estrito'}. Prontuário sincronizado.`, 
         'ai'
       );
+    }
+  };
+
+  const handleReopenDiscrepancy = () => {
+    if (!discrepancy) return;
+    setDiscrepancy(prev => prev ? { ...prev, status: 'pendente' } : null);
+    if (onDispatchScribeMessage) {
+      onDispatchScribeMessage('Discrepância léxica reaberta para reavaliação clínica com a paciente.', 'ai');
     }
   };
 
@@ -497,17 +524,53 @@ export const AnamneseView: React.FC<AnamneseViewProps> = ({
             <button
               type="button"
               onClick={() => handleResolveDiscrepancy('jejum')}
-              className="bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition"
+              className="bg-white hover:bg-amber-100 text-amber-900 border border-amber-300 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer"
             >
               Validar Jejum Intermitente
             </button>
             <button
               type="button"
               onClick={() => handleResolveDiscrepancy('refeicao')}
-              className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
             >
               <Check className="w-3.5 h-3.5" />
               <span>Validar Desjejum às 08:00</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Card Auditável de Discrepância Homologada (Conformidade Resolução CFN nº 856/2026) */}
+      {discrepancy && discrepancy.status === 'resolvido' && (
+        <div className="bg-emerald-50/80 border border-emerald-300 rounded-3xl p-4 shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-950 font-bold text-xs">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              <span>Discrepância Léxica Homologada (Resolução CFN nº 856/2026)</span>
+            </div>
+            <span className="text-[10px] font-bold uppercase bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full">
+              Auditado & Aprovado
+            </span>
+          </div>
+
+          <div className="text-xs text-emerald-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <strong>Decisão Clínica Adotada:</strong>{' '}
+              {discrepancy.resolvedChoice === 'refeicao' 
+                ? 'Validado Desjejum Pré-Treino às 08:00 (Jejum descartado após conferência).'
+                : 'Validado Jejum Intermitente Estrito até 12:30.'}
+              <div className="text-[11px] text-emerald-700 mt-0.5">
+                Responsável: Dra. Maithe (CRN-3 / 48.912) • Registrado às {discrepancy.resolvedAt || '12:12'}
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleReopenDiscrepancy}
+              className="bg-white hover:bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-xl text-[11px] font-bold transition flex items-center gap-1 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3 text-emerald-700" />
+              <span>Reabrir para Revisão</span>
             </button>
           </div>
         </div>

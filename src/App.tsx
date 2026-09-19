@@ -37,6 +37,7 @@ import {
   DEFAULT_CLINIC_CONFIG, 
   INITIAL_COMPLIANCE 
 } from './data/mockData';
+import { applyHighsSolutionToMeal } from './services/dietOptimizationService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('editor');
@@ -284,24 +285,24 @@ export default function App() {
   };
 
   const handleApplySolverSuggestion = () => {
-    // Flash visual confirmation and ensure lunch meal has exact optimized values
-    setMeals(prev => prev.map(meal => {
-      if (meal.id === 'meal-2') {
-        return {
-          ...meal,
-          targetPtn: 40,
-          currentLeucine: 3.2,
-          leucineThresholdMet: true
-        };
-      }
-      return meal;
-    }));
+    // Aplicação cirúrgica dos alimentos e macronutrientes da solução do HiGHS
+    const { updatedMeals, totalLeucine, totalPtn } = applyHighsSolutionToMeal(meals, 'meal-2');
+    setMeals(updatedMeals);
+
+    // Conduz suavemente a visualização para o Editor Dietético
+    setActiveTab('editor');
 
     const confirmMsg: ScribeMessage = {
       id: `msg-confirm-${Date.now()}`,
       timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       speaker: 'ai',
-      text: 'Sucesso: Solução do Solver HiGHS aplicada à Refeição 2. O HUD Metabólico e a Matriz de Substituições foram sincronizados.'
+      text: `**Solução do Solver HiGHS Aplicada com Sucesso ao Almoço (Refeição 2):**\n\n` +
+        `• **Proteína da Refeição:** ${totalPtn}g (supera meta de 40g)\n` +
+        `• **Gatilho de Leucina:** ${totalLeucine}g (≥ 3.0g, ativação ótima da via mTORC1 no pós-treino)\n` +
+        `• **Restrições Respeitadas:** 0g Batata-doce e 0g Lactose atendidas com base nas aversões declaradas.\n` +
+        `• **Alimentos Inseridos:** 150g Peito de Frango, 160g Arroz Branco, 100g Feijão Carioca, 8g Azeite de Oliva, 120g Salada Verde.\n\n` +
+        `O Editor Dietético foi sincronizado e o HUD Metabólico recalculado em tempo real.`,
+      insightBadge: 'Plano Otimizado HiGHS'
     };
     setScribeMessages(prev => [...prev, confirmMsg]);
   };
