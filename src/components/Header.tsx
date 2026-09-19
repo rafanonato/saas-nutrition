@@ -9,6 +9,8 @@ interface HeaderProps {
   isRecording: boolean;
   onToggleRecording: () => void;
   recordingDuration: string;
+  onOpenRecordingStudio?: () => void;
+  onOpenPdfModal?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -17,7 +19,9 @@ export const Header: React.FC<HeaderProps> = ({
   patient,
   isRecording,
   onToggleRecording,
-  recordingDuration
+  recordingDuration,
+  onOpenRecordingStudio,
+  onOpenPdfModal
 }) => {
   return (
     <header 
@@ -113,31 +117,58 @@ export const Header: React.FC<HeaderProps> = ({
       </nav>
 
       {/* 3. Gravação / Ações Rápidas */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Botão de Gravação de Escuta Ativa */}
-        <button
-          id="btn-toggle-recording"
-          onClick={onToggleRecording}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-medium flex items-center gap-2 transition-all border ${
-            isRecording
-              ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-xs'
-              : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
-          }`}
-          title={isRecording ? 'Pausar escuta ambiente' : 'Ativar escuta ambiente da consulta'}
-        >
-          {isRecording ? (
-            <>
-              <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping inline-block" />
-              <Mic className="w-3.5 h-3.5 text-rose-600" />
-              <span className="font-semibold">Gravando: {recordingDuration}</span>
-            </>
-          ) : (
-            <>
-              <MicOff className="w-3.5 h-3.5 text-slate-400" />
-              <span>Escuta Pausada</span>
-            </>
+        <div className="flex items-center gap-1.5">
+          <button
+            id="btn-toggle-recording"
+            onClick={onToggleRecording}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all border cursor-pointer ${
+              isRecording
+                ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-xs'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+            }`}
+            title={isRecording ? 'Pausar escuta ambiente' : 'Ativar escuta ambiente da consulta'}
+          >
+            {isRecording ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-rose-600 animate-ping inline-block" />
+                <Mic className="w-3.5 h-3.5 text-rose-600" />
+                <span className="font-semibold">Gravando: {recordingDuration}</span>
+              </>
+            ) : (
+              <>
+                <MicOff className="w-3.5 h-3.5 text-slate-400" />
+                <span>Escuta Pausada</span>
+              </>
+            )}
+          </button>
+
+          {onOpenRecordingStudio && (
+            <button
+              type="button"
+              onClick={onOpenRecordingStudio}
+              className="px-2.5 py-1.5 rounded-full text-xs font-semibold bg-rose-100/70 hover:bg-rose-100 text-rose-800 border border-rose-200 transition cursor-pointer flex items-center gap-1 shadow-2xs"
+              title="Abrir Estúdio de Áudio da Consulta & Speech-to-Text"
+            >
+              <Sparkles className="w-3 h-3 text-rose-600" />
+              <span className="hidden sm:inline">Estúdio STT</span>
+            </button>
           )}
-        </button>
+        </div>
+
+        {/* Botão Rápido de PDF se estiver no Editor ou Finalização */}
+        {onOpenPdfModal && (activeTab === 'editor' || activeTab === 'finalizar') && (
+          <button
+            type="button"
+            onClick={onOpenPdfModal}
+            className="px-3 py-1.5 rounded-full text-xs font-semibold bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+            title="Gerar e Visualizar PDF Diagramado do Plano Alimentar"
+          >
+            <FileText className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden sm:inline">Gerar PDF</span>
+          </button>
+        )}
 
         {/* Botão de Próxima Etapa */}
         <button

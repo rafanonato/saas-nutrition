@@ -13,10 +13,21 @@ export interface PatientSummary {
   age: number;
   height: number; // in cm
   weight: number; // in kg
+  gender?: 'feminino' | 'masculino';
   goal: string;
   targetKcal: number;
-  bmr: number; // Cunningham
-  get: number;
+  targetPtn?: number;
+  targetCho?: number;
+  targetLip?: number;
+  ptnPerKg?: number;
+  choPerKg?: number;
+  lipPerKg?: number;
+  bmr: number; // Cunningham ou fórmula selecionada
+  bmrFormula?: 'cunningham' | 'mifflin' | 'harris';
+  get: number; // Gasto Energético Total
+  activityFactor?: number;
+  activityLevel?: string;
+  calorieGoalAdjustment?: number;
   phone: string;
   status: string;
   ocrReady: boolean;
@@ -24,6 +35,52 @@ export interface PatientSummary {
   attendanceDate: string;
   whatsappComplianceRate: number; // 0 to 100%
   avatarInitials: string;
+}
+
+export interface DiscrepancyAlert {
+  id: string;
+  field: string;
+  statementA: { text: string; timestamp: string };
+  statementB: { text: string; timestamp: string };
+  status: 'pendente' | 'resolvido';
+  resolvedChoice?: string;
+}
+
+export interface AnamneseData {
+  consultationGoal: string;
+  mainComplaints: string;
+  complaintsTimestamp: string;
+  trainingRoutine: {
+    modality: string;
+    schedule: string;
+    frequency: string;
+    timestamp: string;
+    isLiveFilled: boolean;
+  };
+  sleepRoutine: {
+    hoursPerNight: number;
+    quality: string;
+    timestamp: string;
+    isLiveFilled: boolean;
+  };
+  hydration: {
+    litersPerDay: number;
+    timestamp: string;
+    isLiveFilled: boolean;
+  };
+  gastrointestinal: {
+    bristolType: number; // 1 to 7
+    symptoms: string[];
+    timestamp: string;
+    isLiveFilled: boolean;
+  };
+  aversions: string[];
+  discrepancies: DiscrepancyAlert[];
+  audioQuality: {
+    confidenceScore: number; // 0 to 100
+    hasExcessiveNoise: boolean;
+    noiseWarning?: string;
+  };
 }
 
 export interface Biomarker {
@@ -36,6 +93,8 @@ export interface Biomarker {
   status: 'normal' | 'alerta' | 'critico';
   interpretation: string;
   date: string;
+  isOutlier?: boolean;
+  ocrConfidence?: number;
 }
 
 export interface Skinfolds {
@@ -50,6 +109,26 @@ export interface Skinfolds {
   bodyFatPercent: number;
 }
 
+export type SkinfoldProtocol = 'jp7' | 'jp3' | 'faulkner';
+
+export interface HistoricalBioimpedance {
+  date: string;
+  weight: number;
+  leanMassKg: number;
+  fatMassKg: number;
+  bodyFatPercent: number;
+  bodyWaterPercent: number;
+}
+
+export interface PosturalPhotos {
+  anteriorUrl: string;
+  lateralUrl: string;
+  posteriorUrl: string;
+  isEncryptedAes256: boolean;
+  date: string;
+  cfn856ComplianceVerified: boolean;
+}
+
 export interface BodyComposition {
   currentWeight: number;
   previousWeight: number;
@@ -60,6 +139,7 @@ export interface BodyComposition {
   targetLeanMassKg: number;
   bmrCunningham: number;
   getCalculated: number;
+  skinfoldProtocol: SkinfoldProtocol;
   skinfolds: Skinfolds;
   circumferences: {
     waist: number;
@@ -68,6 +148,8 @@ export interface BodyComposition {
     contractedArm: number;
     thigh: number;
   };
+  historicalRecords: HistoricalBioimpedance[];
+  posturalPhotos: PosturalPhotos;
 }
 
 export interface FoodItem {
@@ -120,10 +202,18 @@ export interface ScribeMessage {
   timestamp: string;
   speaker: 'patient' | 'nutritionist' | 'system' | 'ai';
   text: string;
-  detectedEntities?: {
-    type: 'complaint' | 'symptom' | 'aversion' | 'weight' | 'routine';
+  insightBadge?: string;
+  suggestedAction?: {
+    type: string;
     label: string;
-    fieldUpdated: string;
+    payload?: any;
+  };
+  engine?: string;
+  source?: string;
+  detectedEntities?: {
+    type: 'complaint' | 'symptom' | 'aversion' | 'weight' | 'routine' | string;
+    label: string;
+    fieldUpdated?: string;
     badgeColor?: string;
   };
 }
@@ -142,6 +232,38 @@ export interface ClinicConfig {
   autoForwardAlerts: boolean;
 }
 
+export interface WhatsAppChatMessage {
+  id: string;
+  sender: 'patient' | 'assistant' | 'system';
+  timestamp: string;
+  text: string;
+  mediaType?: 'text' | 'image' | 'audio' | 'pdf';
+  mediaUrl?: string;
+  substitutionCard?: {
+    originalFood: string;
+    suggestedAlternative: string;
+    portionMatch: string;
+    macrosPreserved: string;
+  };
+  visionAnalysis?: {
+    identifiedItems: string[];
+    complianceEstimate: string;
+    fiberVegetableScore: 'excelente' | 'moderado' | 'baixo';
+  };
+  audioTranscribed?: string;
+  audioDurationSeconds?: number;
+}
+
+export interface PatientContextPayload {
+  patient: PatientSummary;
+  anamnese: AnamneseData;
+  bodyComposition: BodyComposition;
+  biomarkers: Biomarker[];
+  meals: Meal[];
+  substitutionRules: SubstitutionRule[];
+  clinicConfig: ClinicConfig;
+}
+
 export interface ComplianceChecklist {
   leucineRequirementMet: boolean;
   aversionRespected: boolean;
@@ -153,4 +275,61 @@ export interface ComplianceChecklist {
   signatureDate: string;
   professionalName: string;
   crnRegistry: string;
+}
+
+export interface AudioTranscriptionSegment {
+  id: string;
+  timestamp: string;
+  secondsOffset: number;
+  speaker: 'patient' | 'nutritionist';
+  text: string;
+  confidenceScore: number;
+  detectedEntities?: {
+    type: 'treino' | 'aversao' | 'bristol' | 'sono' | 'agua' | 'queixa';
+    label: string;
+    field: string;
+  }[];
+}
+
+export interface ConsultationRecordingRecord {
+  id: string;
+  patientId: string;
+  patientName: string;
+  date: string;
+  durationSeconds: number;
+  formattedDuration: string;
+  status: 'gravando' | 'pausado' | 'processado' | 'arquivado';
+  audioQualityScore: number;
+  audioSource: 'microphone_live' | 'audio_sample_simulation';
+  audioUrl?: string;
+  notes?: string;
+  segments: AudioTranscriptionSegment[];
+  summaryExtracted: {
+    mainComplaints?: string;
+    training?: string;
+    sleep?: string;
+    hydration?: string;
+    bristolType?: number;
+    aversions?: string[];
+  };
+  storageKey: string;
+  cfnComplianceEncrypted: boolean;
+}
+
+export interface MealPlanPdfExport {
+  id: string;
+  version: string;
+  title: string;
+  patientId: string;
+  patientName: string;
+  targetKcal: number;
+  mealsCount: number;
+  generatedAt: string;
+  fileSizeKb: number;
+  status: 'gerado' | 'enviado_whatsapp' | 'visualizado_paciente';
+  viewedAt?: string;
+  authenticityHash: string;
+  signedBy: string;
+  crn: string;
+  downloadUrl?: string;
 }

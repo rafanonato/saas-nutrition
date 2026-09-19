@@ -2,6 +2,7 @@ import {
   PatientSummary, 
   Biomarker, 
   BodyComposition, 
+  AnamneseData,
   Meal, 
   SubstitutionRule, 
   ScribeMessage, 
@@ -15,10 +16,21 @@ export const CURRENT_PATIENT: PatientSummary = {
   age: 21,
   height: 165,
   weight: 62.4,
+  gender: 'feminino',
   goal: 'Hipertrofia',
   targetKcal: 2100,
-  bmr: 1410, // Cunningham: 500 + 22 * 47.8 = 1551 ou ajustado
-  get: 2180,
+  targetPtn: 140, // 2.24 g/kg
+  targetCho: 250, // 4.00 g/kg
+  targetLip: 60,  // 0.96 g/kg
+  ptnPerKg: 2.24,
+  choPerKg: 4.0,
+  lipPerKg: 0.96,
+  bmr: 1552, // Cunningham: 500 + 22 * 47.8 = 1551.6 (arredondado para 1552 kcal)
+  bmrFormula: 'cunningham',
+  get: 2405, // 1552 * 1.55 (Moderado: musculação 5x/semana)
+  activityFactor: 1.55,
+  activityLevel: 'Moderado (Musculação 5x/sem)',
+  calorieGoalAdjustment: -12.7, // Déficit/Ajuste planejado em relação ao GET esportivo para início de ciclo
   phone: '+55 11 98765-4321',
   status: 'Na Sala de Espera',
   ocrReady: true,
@@ -133,16 +145,64 @@ export const INITIAL_BIOMARKERS: Biomarker[] = [
   }
 ];
 
+export const INITIAL_ANAMNESE: AnamneseData = {
+  consultationGoal: 'Ganho de massa magra (Hipertrofia) com redução de desconforto gástrico e melhora da disposição.',
+  mainComplaints: 'Sonolência pós-almoço e constipação intestinal severa (3 dias sem evacuar espontaneamente).',
+  complaintsTimestamp: '12:05',
+  trainingRoutine: {
+    modality: 'Musculação Hipertrofia (Treino ABC)',
+    schedule: '07:00 às 08:15',
+    frequency: '5x por semana',
+    timestamp: '12:07',
+    isLiveFilled: true
+  },
+  sleepRoutine: {
+    hoursPerNight: 6.5,
+    quality: 'Sono fragmentado, acorda com cansaço residual',
+    timestamp: '12:08',
+    isLiveFilled: true
+  },
+  hydration: {
+    litersPerDay: 2.2,
+    timestamp: '12:09',
+    isLiveFilled: true
+  },
+  gastrointestinal: {
+    bristolType: 2, // Tipo 2: Em forma de salsicha, mas encaroçada (constipação)
+    symptoms: ['Distensão abdominal', 'Gases frequentes ao final da tarde', 'Azia esporádica'],
+    timestamp: '12:05',
+    isLiveFilled: true
+  },
+  aversions: [
+    'Lactose (Leve desconforto / cólica)',
+    'Batata-Doce (Enjoo severo / aversão gustativa)'
+  ],
+  discrepancies: [
+    {
+      id: 'disc-1',
+      field: 'Jejum vs Refeição Matinal',
+      statementA: { text: 'Informou na abertura: "Faço jejum intermitente de 14h diariamente até o almoço"', timestamp: '12:01' },
+      statementB: { text: 'Informou na rotina: "Como 2 torradas com café com leite e queijo às 08:00 antes do trabalho"', timestamp: '12:11' },
+      status: 'pendente'
+    }
+  ],
+  audioQuality: {
+    confidenceScore: 96,
+    hasExcessiveNoise: false
+  }
+};
+
 export const INITIAL_BODY_COMPOSITION: BodyComposition = {
   currentWeight: 62.4,
   previousWeight: 60.5,
   height: 165,
   bodyFatPercent: 23.4,
   fatMassKg: 14.6,
-  leanMassKg: 47.8, // Massa Livre de Gordura
+  leanMassKg: 47.8, // Massa Livre de Gordura (MLG)
   targetLeanMassKg: 50.5,
-  bmrCunningham: 1410, // 500 + 22 * 47.8 = 1551 (ou calibrado)
-  getCalculated: 2180,
+  bmrCunningham: 1552, // 500 + 22 * 47.8 = 1551.6 (arredondado para 1552 kcal)
+  getCalculated: 2405, // 1552 * 1.55 (Moderado: musculação 5x/sem)
+  skinfoldProtocol: 'jp7',
   skinfolds: {
     triceps: 14.0,
     subscapular: 12.5,
@@ -160,6 +220,40 @@ export const INITIAL_BODY_COMPOSITION: BodyComposition = {
     relaxedArm: 26.2,
     contractedArm: 28.1,
     thigh: 54.0
+  },
+  historicalRecords: [
+    {
+      date: '15/06/2026',
+      weight: 59.8,
+      leanMassKg: 45.2,
+      fatMassKg: 14.6,
+      bodyFatPercent: 24.4,
+      bodyWaterPercent: 53.2
+    },
+    {
+      date: '02/08/2026',
+      weight: 60.5,
+      leanMassKg: 46.5,
+      fatMassKg: 14.0,
+      bodyFatPercent: 23.1,
+      bodyWaterPercent: 54.1
+    },
+    {
+      date: '15/09/2026',
+      weight: 62.4,
+      leanMassKg: 47.8,
+      fatMassKg: 14.6,
+      bodyFatPercent: 23.4,
+      bodyWaterPercent: 55.0
+    }
+  ],
+  posturalPhotos: {
+    anteriorUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=400&auto=format&fit=crop&q=80',
+    lateralUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&auto=format&fit=crop&q=80',
+    posteriorUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    isEncryptedAes256: true,
+    date: '15/09/2026',
+    cfn856ComplianceVerified: true
   }
 };
 
