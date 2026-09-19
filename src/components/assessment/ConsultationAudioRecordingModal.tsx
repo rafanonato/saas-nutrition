@@ -118,7 +118,7 @@ export const ConsultationAudioRecordingModal: React.FC<ConsultationAudioRecordin
       timestamp: '00:00:32',
       secondsOffset: 32,
       speaker: 'patient',
-      text: 'Dra. Camila, mudei meus treinos para as 06h45 da manhã agora! Faço musculação pesada 5 vezes na semana e depois faço 20 minutinhos de esteira moderada.',
+      text: 'Dra. Maithe, mudei meus treinos para as 06h45 da manhã agora! Faço musculação pesada 5 vezes na semana e depois faço 20 minutinhos de esteira moderada.',
       confidenceScore: 97,
       detectedEntities: [
         { type: 'treino', label: 'Musculação 06h45 (5x/sem)', field: 'trainingSchedule' }
@@ -459,7 +459,7 @@ export const ConsultationAudioRecordingModal: React.FC<ConsultationAudioRecordin
     setIsExtractingWithAI(true);
     try {
       const fullTranscript = segments
-        .map(s => `[${s.timestamp} - ${s.speaker === 'patient' ? patient.name : 'Dra. Camila'}]: ${s.text}`)
+        .map(s => `[${s.timestamp} - ${s.speaker === 'patient' ? patient.name : 'Dra. Maithe'}]: ${s.text}`)
         .join('\n');
 
       let res: Response | null = null;
@@ -965,7 +965,7 @@ export const ConsultationAudioRecordingModal: React.FC<ConsultationAudioRecordin
                               : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                           }`}
                         >
-                          {seg.speaker === 'nutritionist' ? 'Dra. Camila Silveira (Nutricionista)' : `Paciente (${patient.name})`}
+                          {seg.speaker === 'nutritionist' ? 'Dra. Maithe (Nutricionista)' : `Paciente (${patient.name})`}
                         </span>
                         <span className="text-[10px] font-mono text-slate-400">
                           {seg.timestamp}

@@ -5,11 +5,46 @@ export type ActiveTab =
   | 'editor'
   | 'finalizar'
   | 'pacientes'
+  | 'gestao-clinica'
   | 'configuracoes';
+
+export interface ClinicTenant {
+  id: string;
+  name: string;
+  tradeName: string;
+  cnpj?: string;
+  plan: 'trial' | 'free_trial' | 'pro' | 'enterprise';
+  active: boolean;
+  createdAt: string;
+  address?: string;
+  phone?: string;
+}
+
+export interface NutritionistUser {
+  id: string;
+  clinicId: string;
+  name: string;
+  email: string;
+  phone: string;
+  crn: string;
+  role: 'admin_nutri' | 'nutri';
+  specialty: string;
+  avatarInitials: string;
+  active: boolean;
+  createdAt: string;
+  notes?: string;
+  accessGrantedAt?: string;
+  patientsCount?: number;
+}
 
 export interface PatientSummary {
   id: string;
+  clinicId?: string;
+  nutritionistId?: string;
   name: string;
+  cpf?: string;
+  email?: string;
+  birthDate?: string;
   age: number;
   height: number; // in cm
   weight: number; // in kg
@@ -35,6 +70,8 @@ export interface PatientSummary {
   attendanceDate: string;
   whatsappComplianceRate: number; // 0 to 100%
   avatarInitials: string;
+  notes?: string;
+  createdAt?: string;
 }
 
 export interface DiscrepancyAlert {

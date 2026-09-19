@@ -10,6 +10,7 @@ import { EditorDieteticoView } from './components/views/EditorDieteticoView';
 import { FinalizacaoView } from './components/views/FinalizacaoView';
 import { PacientesView } from './components/views/PacientesView';
 import { ConfiguracoesView } from './components/views/ConfiguracoesView';
+import { GestaoClinicaView } from './components/views/GestaoClinicaView';
 
 import { 
   ActiveTab, 
@@ -20,10 +21,14 @@ import {
   BodyComposition,
   PatientContextPayload,
   MealPlanPdfExport,
-  AnamneseData
+  AnamneseData,
+  ClinicTenant,
+  NutritionistUser
 } from './types';
 import { ConsultationAudioRecordingModal } from './components/assessment/ConsultationAudioRecordingModal';
 import { MealPlanPdfModal } from './components/diet/MealPlanPdfModal';
+import { tenantService } from './services/tenantService';
+import { patientClinicalService } from './services/patientClinicalService';
 
 import { 
   CURRENT_PATIENT, 
@@ -41,49 +46,38 @@ import { applyHighsSolutionToMeal } from './services/dietOptimizationService';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('editor');
-  const [activePatient, setActivePatient] = useState<PatientSummary>(CURRENT_PATIENT);
-  const [allPatients] = useState<PatientSummary[]>(ALL_PATIENTS);
-  const [meals, setMeals] = useState<Meal[]>(INITIAL_MEALS);
-  const [biomarkers, setBiomarkers] = useState<Biomarker[]>(INITIAL_BIOMARKERS);
-  const [bodyComposition, setBodyComposition] = useState<BodyComposition>(INITIAL_BODY_COMPOSITION);
-  const [substitutionRules, setSubstitutionRules] = useState(INITIAL_SUBSTITUTION_RULES);
-  const [scribeMessages, setScribeMessages] = useState<ScribeMessage[]>(INITIAL_SCRIBE_MESSAGES);
+  const [clinic, setClinic] = useState<ClinicTenant>(() => tenantService.getClinic());
+  const [allNutritionists, setAllNutritionists] = useState<NutritionistUser[]>(() => tenantService.getNutritionists());
+  const [activeNutritionist, setActiveNutritionist] = useState<NutritionistUser>(() => tenantService.getActiveNutritionist());
+  
+  // Pacientes da nutricionista ativa (com persistência via tenantService)
+  const [allPatients, setAllPatients] = useState<PatientSummary[]>(() => {
+    const nutri = tenantService.getActiveNutritionist();
+    const nutriPatients = tenantService.getPatientsByNutritionist(nutri.id);
+    return nutriPatients.length > 0 ? nutriPatients : ALL_PATIENTS;
+  });
+
+  const [activePatient, setActivePatient] = useState<PatientSummary>(() => {
+    return allPatients[0] || CURRENT_PATIENT;
+  });
+
+  // Prontuário isolado e limpo (carregado dinamicamente via patientClinicalService)
+  const initialClinicalData = patientClinicalService.getPatientClinicalData(allPatients[0] || CURRENT_PATIENT);
+
+  const [meals, setMeals] = useState<Meal[]>(initialClinicalData.meals);
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>(initialClinicalData.biomarkers);
+  const [bodyComposition, setBodyComposition] = useState<BodyComposition>(initialClinicalData.bodyComposition);
+  const [substitutionRules, setSubstitutionRules] = useState(initialClinicalData.substitutionRules);
+  const [scribeMessages, setScribeMessages] = useState<ScribeMessage[]>(initialClinicalData.scribeMessages);
   const [clinicConfig] = useState(DEFAULT_CLINIC_CONFIG);
   const [compliance] = useState(INITIAL_COMPLIANCE);
-  const [anamnese, setAnamnese] = useState<AnamneseData>(INITIAL_ANAMNESE);
-  const [consultationRecordings, setConsultationRecordings] = useState<any[]>([
-    {
-      id: 'rec-1',
-      patientId: 'pat-1',
-      patientName: 'Manuela Silveira',
-      date: '18/09/2026',
-      formattedDuration: '18m 42s',
-      audioQualityScore: 97,
-      notes: 'Paciente relata treinos de musculação às 06h45, aversão estrita a batata-doce e intolerância à lactose.'
-    }
-  ]);
+  const [anamnese, setAnamnese] = useState<AnamneseData>(initialClinicalData.anamnese);
+  const [consultationRecordings, setConsultationRecordings] = useState<any[]>(initialClinicalData.recordings);
+  const [pdfHistory, setPdfHistory] = useState<MealPlanPdfExport[]>(initialClinicalData.pdfHistory);
 
-  // Global Modals State & PDF History
+  // Global Modals State
   const [isGlobalAudioModalOpen, setIsGlobalAudioModalOpen] = useState<boolean>(false);
   const [isGlobalPdfModalOpen, setIsGlobalPdfModalOpen] = useState<boolean>(false);
-  const [pdfHistory, setPdfHistory] = useState<MealPlanPdfExport[]>([
-    {
-      id: 'pdf-export-1',
-      version: 'v1.0',
-      title: 'Plano_Alimentar_Hipertrofia_Manuela_Silveira.pdf',
-      patientId: 'pat-1',
-      patientName: 'Manuela Silveira',
-      targetKcal: 2100,
-      mealsCount: 4,
-      generatedAt: '18/09/2026 às 12:45',
-      fileSizeKb: 2420,
-      status: 'visualizado_paciente',
-      viewedAt: '12:47 (via WhatsApp)',
-      authenticityHash: 'SHA-256-CFN856-9B41-XF82',
-      signedBy: 'Dra. Camila Silveira',
-      crn: 'CRN-3 / 48.912'
-    }
-  ]);
 
   // Payload de contexto clínico completo para o motor de IA (Etapa 4)
   const patientContext: PatientContextPayload = {
@@ -109,6 +103,103 @@ export default function App() {
     }
     return () => clearInterval(interval);
   }, [isRecording]);
+
+  // Troca de paciente com persistência isolada e dados limpos (Clean Clinical Record)
+  const switchActivePatient = (nextPatient: PatientSummary) => {
+    // 1. Salva prontuário do paciente anterior
+    if (activePatient?.id) {
+      patientClinicalService.savePatientClinicalData(activePatient.id, {
+        meals,
+        biomarkers,
+        bodyComposition,
+        anamnese,
+        substitutionRules,
+        recordings: consultationRecordings,
+        pdfHistory,
+        scribeMessages
+      });
+    }
+
+    // 2. Carrega prontuário limpo ou histórico do próximo paciente
+    const record = patientClinicalService.getPatientClinicalData(nextPatient);
+    setActivePatient(nextPatient);
+    setMeals(record.meals);
+    setBiomarkers(record.biomarkers);
+    setBodyComposition(record.bodyComposition);
+    setAnamnese(record.anamnese);
+    setSubstitutionRules(record.substitutionRules);
+    setConsultationRecordings(record.recordings);
+    setPdfHistory(record.pdfHistory);
+    setScribeMessages(record.scribeMessages);
+  };
+
+  // Salva automaticamente mutações no prontuário do paciente ativo
+  useEffect(() => {
+    if (activePatient?.id) {
+      patientClinicalService.savePatientClinicalData(activePatient.id, {
+        meals,
+        biomarkers,
+        bodyComposition,
+        anamnese,
+        substitutionRules,
+        recordings: consultationRecordings,
+        pdfHistory,
+        scribeMessages
+      });
+    }
+  }, [activePatient.id, meals, biomarkers, bodyComposition, anamnese, substitutionRules, consultationRecordings, pdfHistory, scribeMessages]);
+
+  // Gestão Administrativa da Clínica (Camada 1 e 2)
+  const handleUpdateClinic = (updates: Partial<ClinicTenant>) => {
+    const updated = tenantService.updateClinic(updates);
+    setClinic(updated);
+  };
+
+  const handleAddNutritionist = (data: Omit<NutritionistUser, 'id' | 'clinicId' | 'createdAt' | 'patientsCount'>) => {
+    tenantService.createNutritionist(data);
+    setAllNutritionists(tenantService.getNutritionists());
+  };
+
+  const handleUpdateNutritionist = (id: string, updates: Partial<NutritionistUser>) => {
+    tenantService.updateNutritionist(id, updates);
+    const updatedList = tenantService.getNutritionists();
+    setAllNutritionists(updatedList);
+    if (activeNutritionist.id === id) {
+      const target = updatedList.find(n => n.id === id);
+      if (target) setActiveNutritionist(target);
+    }
+  };
+
+  const handleToggleNutritionistAccess = (id: string, active: boolean) => {
+    tenantService.toggleNutritionistAccess(id, active);
+    const updatedList = tenantService.getNutritionists();
+    setAllNutritionists(updatedList);
+    if (activeNutritionist.id === id) {
+      const target = updatedList.find(n => n.id === id);
+      if (target) setActiveNutritionist(target);
+    }
+  };
+
+  const handleDeleteNutritionist = (id: string) => {
+    tenantService.deleteNutritionist(id);
+    const updatedList = tenantService.getNutritionists();
+    setAllNutritionists(updatedList);
+    if (activeNutritionist.id === id && updatedList.length > 0) {
+      handleSwitchNutritionist(updatedList[0].id);
+    }
+  };
+
+  const handleSwitchNutritionist = (id: string) => {
+    tenantService.setActiveNutritionist(id);
+    const nutris = tenantService.getNutritionists();
+    const targetNutri = nutris.find(n => n.id === id) || nutris[0];
+    setActiveNutritionist(targetNutri);
+    const nutriPatients = tenantService.getPatientsByNutritionist(id);
+    setAllPatients(nutriPatients);
+    if (nutriPatients.length > 0) {
+      switchActivePatient(nutriPatients[0]);
+    }
+  };
 
   const formatDuration = (totalSec: number) => {
     const hrs = Math.floor(totalSec / 3600);
@@ -377,8 +468,44 @@ export default function App() {
   };
 
   const handleStartConsultation = (patient: PatientSummary) => {
-    setActivePatient(patient);
+    switchActivePatient(patient);
     setActiveTab('anamnese');
+  };
+
+  const handleAddNewPatient = (newPatient: PatientSummary, autoStart: boolean) => {
+    tenantService.createPatient(newPatient);
+    setAllPatients(prev => [newPatient, ...prev]);
+
+    // Registro no Copiloto Clínico
+    const announceMsg: ScribeMessage = {
+      id: `msg-new-pat-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      speaker: 'ai',
+      text: `Novo paciente registrado no prontuário de ${activeNutritionist.name}: **${newPatient.name}**. TMB estimada: ${newPatient.bmr} kcal, GET: ${newPatient.get} kcal, Meta calórica alvo: ${newPatient.targetKcal} kcal (${newPatient.goal}). Canal WhatsApp Zero-App (${newPatient.phone}) provisionado com conformidade CFN nº 856/2026.`
+    };
+    setScribeMessages(prev => [...prev, announceMsg]);
+
+    if (autoStart) {
+      switchActivePatient(newPatient);
+      setActiveTab('anamnese');
+    }
+  };
+
+  const handleUpdatePatientRecord = (id: string, updates: Partial<PatientSummary>) => {
+    tenantService.updatePatient(id, updates);
+    setAllPatients(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+    if (activePatient.id === id) {
+      setActivePatient(prev => ({ ...prev, ...updates }));
+    }
+  };
+
+  const handleDeletePatientRecord = (id: string) => {
+    tenantService.deletePatient(id);
+    const updated = allPatients.filter(p => p.id !== id);
+    setAllPatients(updated);
+    if (activePatient.id === id && updated.length > 0) {
+      switchActivePatient(updated[0]);
+    }
   };
 
   const handleDispatchWhatsApp = () => {
@@ -399,11 +526,12 @@ export default function App() {
       <Sidebar 
         activeTab={activeTab} 
         onSelectTab={setActiveTab} 
+        activeNutritionist={activeNutritionist}
       />
 
       {/* 2. Área Central de Aplicação */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Topbar com dados do Paciente e Navegação em Pílulas */}
+        {/* Topbar com dados do Paciente ou da Clínica e Navegação em Pílulas */}
         <Header 
           activeTab={activeTab}
           onSelectTab={setActiveTab}
@@ -413,6 +541,8 @@ export default function App() {
           recordingDuration={formatDuration(recordingSeconds)}
           onOpenRecordingStudio={() => setIsGlobalAudioModalOpen(true)}
           onOpenPdfModal={() => setIsGlobalPdfModalOpen(true)}
+          clinic={clinic}
+          activeNutritionist={activeNutritionist}
         />
 
         {/* HUD Metabólico Superior Fixo (Visível em abas clínicas e no editor) */}
@@ -503,6 +633,27 @@ export default function App() {
               <PacientesView 
                 patients={allPatients}
                 onSelectPatient={handleStartConsultation}
+                onAddNewPatient={handleAddNewPatient}
+                onUpdatePatient={handleUpdatePatientRecord}
+                onDeletePatient={handleDeletePatientRecord}
+                currentNutritionist={activeNutritionist}
+                currentClinic={clinic}
+              />
+            )}
+
+            {/* Camada 1: Gestão Administrativa da Clínica e de Nutricionistas */}
+            {activeTab === 'gestao-clinica' && (
+              <GestaoClinicaView 
+                clinic={clinic}
+                nutritionists={allNutritionists}
+                activeNutritionist={activeNutritionist}
+                onUpdateClinic={handleUpdateClinic}
+                onAddNutritionist={handleAddNutritionist}
+                onUpdateNutritionist={handleUpdateNutritionist}
+                onToggleAccess={handleToggleNutritionistAccess}
+                onDeleteNutritionist={handleDeleteNutritionist}
+                onSwitchActiveNutritionist={handleSwitchNutritionist}
+                onNavigateToTab={setActiveTab}
               />
             )}
 

@@ -233,7 +233,7 @@ export const CopilotPanel: React.FC<CopilotPanelProps> = ({
             }`}>
               <span>
                 {msg.speaker === 'patient' && 'Transcrição da Paciente'}
-                {msg.speaker === 'nutritionist' && 'Dra. Camila (Nutricionista)'}
+                {msg.speaker === 'nutritionist' && 'Dra. Maithe (Nutricionista)'}
                 {msg.speaker === 'ai' && (msg.engine || 'Copiloto Clínico HiGHS')}
                 {msg.speaker === 'system' && 'Sistema TalkNutri'}
               </span>

@@ -171,7 +171,7 @@ export const ConfiguracoesView: React.FC<ConfiguracoesViewProps> = ({ config }) 
               onChange={(e) => setCurrentConfig(prev => ({ ...prev, whatsappPersona: e.target.value as any }))}
               className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-800 outline-none focus:border-blue-400"
             >
-              <option value="assistente_1p">Assistente em 1ª Pessoa ("Sou a assistente da Dra. Camila")</option>
+              <option value="assistente_1p">Assistente em 1ª Pessoa ("Sou a assistente da Dra. Maithe")</option>
               <option value="institucional">Institucional Neutro ("Clínica informa:")</option>
               <option value="imitar_nutri">Espelho da Linguagem da Nutricionista</option>
             </select>

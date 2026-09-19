@@ -106,7 +106,7 @@ function generateClinicalFallback(userMessage: string, context: any, isImageChec
   // 5. Ferro / Suplementos
   if (normalized.includes("ferro") || normalized.includes("suplement") || normalized.includes("vitamina")) {
     return {
-      replyText: `A suplementação de **Ferro Bisglicinato 30mg** prescrita pela Dra. Camila tem como objetivo restaurar sua Ferritina (que estava em 18 ng/mL no seu exame). Dica de ouro: tome preferencialmente junto com uma fruta cítrica rica em Vitamina C (como laranja ou kiwi) e evite leite ou café na mesma hora para maximizar a absorção! 🍊💊`
+      replyText: `A suplementação de **Ferro Bisglicinato 30mg** prescrita pela Dra. Maithe tem como objetivo restaurar sua Ferritina (que estava em 18 ng/mL no seu exame). Dica de ouro: tome preferencialmente junto com uma fruta cítrica rica em Vitamina C (como laranja ou kiwi) e evite leite ou café na mesma hora para maximizar a absorção! 🍊💊`
     };
   }
 
@@ -119,7 +119,7 @@ function generateClinicalFallback(userMessage: string, context: any, isImageChec
     normalized.includes("barriga")
   ) {
     return {
-      replyText: `Como observamos na sua consulta a classificação de Bristol tipo 2, combinamos o aumento de psyllium (5g pela manhã) e priorizamos sementes de chia e água. Se o intestino ainda não funcionou hoje, aumente 1 copo de água morna e adicione kiwi ou mamão ao café da tarde. Vou registrar isso no prontuário para a Dra. Camila acompanhar! 🌿`
+      replyText: `Como observamos na sua consulta a classificação de Bristol tipo 2, combinamos o aumento de psyllium (5g pela manhã) e priorizamos sementes de chia e água. Se o intestino ainda não funcionou hoje, aumente 1 copo de água morna e adicione kiwi ou mamão ao café da tarde. Vou registrar isso no prontuário para a Dra. Maithe acompanhar! 🌿`
     };
   }
 
@@ -517,7 +517,7 @@ app.post("/api/ai/copilot-chat", async (req, res) => {
       ).join("\n") || "Histórico em consolidação";
 
       const systemPrompt = `
-Você é o Copiloto Clínico HiGHS (Dual Simplex / TACO & TBCA) da Dra. Camila Silveira (CRN-3 / 48.912) no TalkNutri.
+Você é o Copiloto Clínico HiGHS (Dual Simplex / TACO & TBCA) da Dra. Maithe (CRN-3 / 48.912) no TalkNutri.
 Seu papel é ser um assistente de inteligência e otimização nutricional estritamente analítico, direto e objetivo.
 
 === DADOS ESSENCIAIS DA PACIENTE ===
@@ -621,7 +621,7 @@ app.post("/api/ai/patient-chat", async (req, res) => {
       const leanMass = context?.bodyComposition?.leanMassKg || 47.8;
 
       const systemPrompt = `
-Você é a Assistente Virtual Oficial da Dra. Camila Silveira (CRN-3 / 48.912) no WhatsApp para a paciente ${patientName}.
+Você é a Assistente Virtual Oficial da Dra. Maithe (CRN-3 / 48.912) no WhatsApp para a paciente ${patientName}.
 OBJETIVO CLÍNICO: ${goal} | Meta: ${targetKcal} kcal | TMB Cunningham: ${bmr} kcal | MLG: ${leanMass} kg.
 RESTRIÇÕES E AVERSÕES SEVERAS: ${aversions}. NUNCA sugira nenhum alimento que cause aversão!
 DIRETRIZES:

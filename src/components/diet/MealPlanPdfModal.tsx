@@ -61,7 +61,7 @@ export const MealPlanPdfModal: React.FC<MealPlanPdfModalProps> = ({
         fileSizeKb: 2420,
         status: 'gerado',
         authenticityHash: 'SHA-256-CFN856-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-        signedBy: 'Dra. Camila Silveira',
+        signedBy: 'Dra. Maithe',
         crn: 'CRN-3 / 48.912'
       });
     }
@@ -117,7 +117,7 @@ export const MealPlanPdfModal: React.FC<MealPlanPdfModalProps> = ({
         fileSizeKb: 2420,
         status: 'gerado',
         authenticityHash: 'SHA-256-CFN856-' + Math.random().toString(36).substring(2, 9).toUpperCase(),
-        signedBy: 'Dra. Camila Silveira',
+        signedBy: 'Dra. Maithe',
         crn: 'CRN-3 / 48.912'
       });
     }
@@ -143,7 +143,7 @@ export const MealPlanPdfModal: React.FC<MealPlanPdfModalProps> = ({
           status: 'enviado_whatsapp',
           viewedAt: 'Em trânsito',
           authenticityHash: 'SHA-256-CFN856-9B41-XF82',
-          signedBy: 'Dra. Camila Silveira',
+          signedBy: 'Dra. Maithe',
           crn: 'CRN-3 / 48.912'
         });
       }

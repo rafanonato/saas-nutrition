@@ -92,7 +92,7 @@ export const MealPlanPdfDocument: React.FC<MealPlanPdfDocumentProps> = ({
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
-                Clínica Dra. Camila Silveira • CRN-3 / 48.912 • Prescrição Dietética Individualizada
+                Clínica Dra. Maithe • CRN-3 / 48.912 • Prescrição Dietética Individualizada
               </p>
             </div>
           </div>
@@ -617,7 +617,7 @@ export const MealPlanPdfDocument: React.FC<MealPlanPdfDocumentProps> = ({
               </div>
               <div className="text-xs">
                 <span className="font-bold text-slate-900 block">Documento Assinado Digitalmente</span>
-                <span className="text-slate-600">Dra. Camila Silveira • Nutricionista Clínica e Esportiva</span>
+                <span className="text-slate-600">Dra. Maithe • Nutricionista Clínica e Esportiva</span>
                 <span className="text-slate-500 block text-[11px]">Registro Profissional: CRN-3 / 48.912</span>
               </div>
             </div>

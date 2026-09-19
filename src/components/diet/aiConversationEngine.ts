@@ -27,9 +27,9 @@ export function buildPatientSystemPrompt(context: PatientContextPayload): string
   ).join('\n');
 
   const personaInstruction = clinicConfig.whatsappPersona === 'assistente_1p'
-    ? 'Você é a Assistente Virtual Oficial da Dra. Camila Silveira (CRN-3 / 48.912).'
+    ? 'Você é a Assistente Virtual Oficial da Dra. Maithe (CRN-3 / 48.912).'
     : clinicConfig.whatsappPersona === 'imitar_nutri'
-    ? 'Você responde como a própria Dra. Camila Silveira, mantendo tom amigável, científico, acolhedor e seguro.'
+    ? 'Você responde como a própria Dra. Maithe, mantendo tom amigável, científico, acolhedor e seguro.'
     : 'Você é a Linha de Cuidado Contínuo da Clínica de Nutrição.';
 
   return `
@@ -146,7 +146,7 @@ export function generateLocalContextAwareReply(
       id: `bot-${Date.now()}`,
       sender: 'assistant',
       timestamp: now,
-      text: `A suplementação de **Ferro Bisglicinato 30mg** prescrita pela Dra. Camila tem como objetivo restaurar sua Ferritina (que estava em 18 ng/mL no seu exame). Dica de ouro: tome preferencialmente junto com uma fruta cítrica rica em Vitamina C (como laranja ou kiwi) e evite leite ou café na mesma hora para maximizar a absorção! 🍊💊`
+      text: `A suplementação de **Ferro Bisglicinato 30mg** prescrita pela Dra. Maithe tem como objetivo restaurar sua Ferritina (que estava em 18 ng/mL no seu exame). Dica de ouro: tome preferencialmente junto com uma fruta cítrica rica em Vitamina C (como laranja ou kiwi) e evite leite ou café na mesma hora para maximizar a absorção! 🍊💊`
     };
   }
 
@@ -156,7 +156,7 @@ export function generateLocalContextAwareReply(
       id: `bot-${Date.now()}`,
       sender: 'assistant',
       timestamp: now,
-      text: `Como observamos na sua consulta a classificação de Bristol tipo 2, combinamos o aumento de psyllium (5g pela manhã) e priorizamos sementes de chia e água. Se o intestino ainda não funcionou hoje, aumente 1 copo de água morna e adicione kiwi ou mamão ao café da tarde. Vou registrar isso no prontuário para a Dra. Camila acompanhar! 🌿`
+      text: `Como observamos na sua consulta a classificação de Bristol tipo 2, combinamos o aumento de psyllium (5g pela manhã) e priorizamos sementes de chia e água. Se o intestino ainda não funcionou hoje, aumente 1 copo de água morna e adicione kiwi ou mamão ao café da tarde. Vou registrar isso no prontuário para a Dra. Maithe acompanhar! 🌿`
     };
   }
 

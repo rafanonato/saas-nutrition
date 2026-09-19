@@ -30,7 +30,7 @@ export const INITIAL_CONSULTATION_RECORDINGS: ConsultationRecordingRecord[] = [
         timestamp: '00:00:32',
         secondsOffset: 32,
         speaker: 'patient',
-        text: 'Dra. Camila, mudei meus treinos para as 06h45 da manhã agora! Faço musculação pesada 5 vezes na semana e depois faço 20 minutinhos de esteira moderada.',
+        text: 'Dra. Maithe, mudei meus treinos para as 06h45 da manhã agora! Faço musculação pesada 5 vezes na semana e depois faço 20 minutinhos de esteira moderada.',
         confidenceScore: 97,
         detectedEntities: [
           { type: 'treino', label: 'Musculação 06h45 (5x/sem)', field: 'trainingSchedule' }

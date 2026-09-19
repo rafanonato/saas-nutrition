@@ -50,7 +50,7 @@ export const AIConversationalEngineModal: React.FC<AIConversationalEngineModalPr
       id: 'init-1',
       sender: 'assistant',
       timestamp: '14:40',
-      text: `Olá ${context.patient.name.split(' ')[0]}! Aqui é o seu Canal Zero-App oficial da Clínica. Seu plano de Hipertrofia de ${context.patient.targetKcal} kcal está 100% calibrado pela Dra. Camila Silveira (CRN-3 / 48.912). Qualquer dúvida sobre trocas de alimentos, horários ou fotos de prato, me envie aqui! ✨`,
+      text: `Olá ${context.patient.name.split(' ')[0]}! Aqui é o seu Canal Zero-App oficial da Clínica. Seu plano de Hipertrofia de ${context.patient.targetKcal} kcal está 100% calibrado pela Dra. Maithe (CRN-3 / 48.912). Qualquer dúvida sobre trocas de alimentos, horários ou fotos de prato, me envie aqui! ✨`,
       mediaType: 'pdf',
       mediaUrl: `Plano_Nutricional_${context.patient.name.replace(' ', '_')}_2026.pdf`
     }
@@ -214,10 +214,10 @@ export const AIConversationalEngineModal: React.FC<AIConversationalEngineModalPr
                   <div className="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shrink-0">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-emerald-700 text-white font-bold text-xs flex items-center justify-center border border-white/20">
-                        DC
+                        DM
                       </div>
                       <div>
-                        <div className="font-bold text-xs leading-tight">Dra. Camila Silveira</div>
+                        <div className="font-bold text-xs leading-tight">Dra. Maithe</div>
                         <div className="text-[10px] text-emerald-200 flex items-center gap-1">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>{engineBadge}</span>
@@ -324,7 +324,7 @@ export const AIConversationalEngineModal: React.FC<AIConversationalEngineModalPr
                       <div className="flex items-start">
                         <div className="bg-white rounded-2xl rounded-tl-xs p-3 shadow-xs text-xs text-slate-500 flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                          <span>Dra. Camila digitando / consultando prontuário...</span>
+                          <span>Dra. Maithe digitando / consultando prontuário...</span>
                         </div>
                       </div>
                     )}

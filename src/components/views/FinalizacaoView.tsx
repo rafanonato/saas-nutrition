@@ -39,7 +39,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
       status: 'visualizado_paciente',
       viewedAt: '12:47 (via WhatsApp)',
       authenticityHash: 'SHA-256-CFN856-9B41-XF82',
-      signedBy: 'Dra. Camila Silveira',
+      signedBy: 'Dra. Maithe',
       crn: 'CRN-3 / 48.912'
     }
   ]);
@@ -64,7 +64,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
       status: 'enviado_whatsapp',
       viewedAt: 'Entregue via WhatsApp',
       authenticityHash: 'SHA-256-CFN856-' + Math.random().toString(36).substring(2, 8).toUpperCase(),
-      signedBy: 'Dra. Camila Silveira',
+      signedBy: 'Dra. Maithe',
       crn: 'CRN-3 / 48.912'
     };
 
@@ -269,10 +269,10 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
             <div className="bg-[#075E54] text-white px-4 py-3 rounded-t-[26px] flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold text-xs">
-                  DC
+                  DM
                 </div>
                 <div>
-                  <div className="font-bold text-xs leading-tight">Clínica Nutrição & Dra. Camila</div>
+                  <div className="font-bold text-xs leading-tight">Clínica Nutrição & Dra. Maithe</div>
                   <div className="text-[10px] text-emerald-200">Online • Assistente Oficial</div>
                 </div>
               </div>

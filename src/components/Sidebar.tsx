@@ -1,13 +1,14 @@
 import React from 'react';
-import { Home, Users, Settings, Activity } from 'lucide-react';
-import { ActiveTab } from '../types';
+import { Home, Users, Settings, Activity, Building2 } from 'lucide-react';
+import { ActiveTab, NutritionistUser } from '../types';
 
 interface SidebarProps {
   activeTab: ActiveTab;
   onSelectTab: (tab: ActiveTab) => void;
+  activeNutritionist?: NutritionistUser;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab, activeNutritionist }) => {
   return (
     <aside 
       id="main-sidebar"
@@ -66,12 +67,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
               ? 'bg-blue-50 text-blue-600 shadow-sm'
               : 'text-slate-400 hover:text-blue-600 hover:bg-slate-50'
           }`}
-          title="Base de Pacientes"
+          title="Base de Pacientes da Nutricionista"
         >
           <Users className="w-5 h-5" />
           <span className="sr-only">Pacientes</span>
           {activeTab === 'pacientes' && (
             <span className="absolute -left-1 top-2.5 bottom-2.5 w-1 bg-blue-600 rounded-r-full" />
+          )}
+        </button>
+
+        {/* Camada 1: Gestão da Clínica (Tenant Global e Gestão de Nutricionistas) */}
+        <button
+          id="nav-btn-gestao-clinica"
+          onClick={() => onSelectTab('gestao-clinica')}
+          className={`p-3 rounded-2xl transition-all duration-200 relative group ${
+            activeTab === 'gestao-clinica'
+              ? 'bg-indigo-50 text-indigo-600 shadow-sm'
+              : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-50'
+          }`}
+          title="Gestão da Clínica (Cadastros & Acessos de Nutricionistas)"
+        >
+          <Building2 className="w-5 h-5" />
+          <span className="sr-only">Gestão da Clínica</span>
+          {activeTab === 'gestao-clinica' && (
+            <span className="absolute -left-1 top-2.5 bottom-2.5 w-1 bg-indigo-600 rounded-r-full" />
           )}
         </button>
 
@@ -94,14 +113,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onSelectTab }) => {
       </nav>
 
       {/* Doctor profile avatar at bottom */}
-      <div className="mt-auto flex flex-col items-center gap-2">
+      <div 
+        onClick={() => onSelectTab('gestao-clinica')}
+        className="mt-auto flex flex-col items-center gap-1.5 cursor-pointer group"
+        title={`Nutricionista: ${activeNutritionist?.name || 'Dra. Maithe'} (${activeNutritionist?.crn || 'CRN-3'}) - Clique para gerenciar clínica`}
+      >
         <div 
-          className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-200 to-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-700 font-semibold text-xs cursor-pointer hover:ring-2 hover:ring-blue-400 transition"
-          title="Dra. Maithe (CRN-3 / 48.912)"
+          className="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-200 to-blue-100 border-2 border-white shadow-sm flex items-center justify-center text-blue-700 font-semibold text-xs group-hover:ring-2 group-hover:ring-blue-400 transition"
         >
-          DM
+          {activeNutritionist?.avatarInitials || 'DM'}
         </div>
-        <span className="text-[10px] font-medium text-slate-400">CRN-3</span>
+        <span className="text-[10px] font-medium text-slate-400 group-hover:text-slate-600 transition">
+          {activeNutritionist?.crn?.split('/')[0]?.trim() || 'CRN-3'}
+        </span>
       </div>
     </aside>
   );

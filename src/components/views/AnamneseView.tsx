@@ -70,56 +70,45 @@ export const AnamneseView: React.FC<AnamneseViewProps> = ({
   onDispatchScribeMessage 
 }) => {
   // Estado da Anamnese Estruturada
-  const [aversions, setAversions] = useState<string[]>(
-    anamneseProp?.aversions || [
-      'Lactose (Leve desconforto / distensão)',
-      'Batata-Doce (Enjoo severo / aversão gustativa)'
-    ]
-  );
+  const [aversions, setAversions] = useState<string[]>(() => anamneseProp?.aversions || []);
   const [newAversionInput, setNewAversionInput] = useState('');
 
   // Rotina & Hábitos
   const [trainingSchedule, setTrainingSchedule] = useState(
-    anamneseProp?.trainingRoutine?.schedule 
-      ? `${anamneseProp.trainingRoutine.schedule} (${anamneseProp.trainingRoutine.modality || 'Musculação'}, ${anamneseProp.trainingRoutine.frequency || '5x/sem'})`
-      : '07:00 às 08:15 (Musculação ABC, 5x/sem)'
+    anamneseProp?.trainingRoutine?.schedule || anamneseProp?.trainingRoutine?.modality || ''
   );
   const [sleepInfo, setSleepInfo] = useState(
     anamneseProp?.sleepRoutine?.quality 
       ? `${anamneseProp.sleepRoutine.hoursPerNight}h / noite (${anamneseProp.sleepRoutine.quality})`
-      : '6h30 / noite (Sono fragmentado, acorda cansada)'
+      : (anamneseProp?.sleepRoutine ? `${anamneseProp.sleepRoutine.hoursPerNight}h / noite` : '')
   );
   const [hydrationLiters, setHydrationLiters] = useState(
     anamneseProp?.hydration?.litersPerDay 
-      ? `${anamneseProp.hydration.litersPerDay} L / dia (Água filtrada)`
-      : '2.2 L / dia (Água filtrada)'
+      ? `${anamneseProp.hydration.litersPerDay} L / dia`
+      : '2.0 L / dia'
   );
   const [bristolType, setBristolType] = useState<number>(
-    anamneseProp?.gastrointestinal?.bristolType ?? 2
+    anamneseProp?.gastrointestinal?.bristolType ?? 4
   );
   const [mainComplaints, setMainComplaints] = useState(
-    anamneseProp?.mainComplaints || 'Sonolência pós-almoço e constipação intestinal severa (3 dias sem evacuar espontaneamente).'
+    anamneseProp?.mainComplaints !== undefined ? anamneseProp.mainComplaints : ''
   );
 
-  // Sincroniza se anamneseProp for atualizada externamente (ex: áudio recording modal)
+  // Sincroniza se anamneseProp for atualizada externamente (ex: áudio recording modal ou troca de paciente)
   React.useEffect(() => {
     if (anamneseProp) {
-      if (anamneseProp.aversions) setAversions(anamneseProp.aversions);
-      if (anamneseProp.trainingRoutine?.schedule) {
-        setTrainingSchedule(`${anamneseProp.trainingRoutine.schedule} (${anamneseProp.trainingRoutine.modality || 'Musculação'}, ${anamneseProp.trainingRoutine.frequency || '5x/sem'})`);
-      }
-      if (anamneseProp.sleepRoutine) {
-        setSleepInfo(`${anamneseProp.sleepRoutine.hoursPerNight}h / noite (${anamneseProp.sleepRoutine.quality})`);
-      }
-      if (anamneseProp.hydration) {
-        setHydrationLiters(`${anamneseProp.hydration.litersPerDay} L / dia (Água filtrada)`);
-      }
-      if (anamneseProp.gastrointestinal) {
-        setBristolType(anamneseProp.gastrointestinal.bristolType);
-      }
-      if (anamneseProp.mainComplaints) {
-        setMainComplaints(anamneseProp.mainComplaints);
-      }
+      setAversions(anamneseProp.aversions || []);
+      setTrainingSchedule(anamneseProp.trainingRoutine?.schedule || anamneseProp.trainingRoutine?.modality || '');
+      setSleepInfo(
+        anamneseProp.sleepRoutine?.quality 
+          ? `${anamneseProp.sleepRoutine.hoursPerNight}h / noite (${anamneseProp.sleepRoutine.quality})`
+          : (anamneseProp.sleepRoutine ? `${anamneseProp.sleepRoutine.hoursPerNight}h / noite` : '')
+      );
+      setHydrationLiters(
+        anamneseProp.hydration?.litersPerDay ? `${anamneseProp.hydration.litersPerDay} L / dia` : '2.0 L / dia'
+      );
+      setBristolType(anamneseProp.gastrointestinal?.bristolType ?? 4);
+      setMainComplaints(anamneseProp.mainComplaints !== undefined ? anamneseProp.mainComplaints : '');
     }
   }, [anamneseProp]);
 
@@ -837,42 +826,51 @@ export const AnamneseView: React.FC<AnamneseViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {biomarkers.map((bio) => (
-                <tr key={bio.id} className="hover:bg-slate-50/70 transition">
-                  <td className="py-3 px-4 font-semibold text-slate-800 flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${
-                      bio.status === 'critico' ? 'bg-rose-600' : bio.status === 'alerta' ? 'bg-amber-500' : 'bg-emerald-500'
-                    }`} />
-                    {bio.name}
-                  </td>
-                  <td className="py-3 px-4 text-center font-bold text-slate-900">
-                    <span className={`px-2 py-0.5 rounded text-xs ${
-                      bio.status === 'critico' 
-                        ? 'text-rose-700 bg-rose-50 border border-rose-200' 
-                        : bio.status === 'alerta'
-                        ? 'text-amber-800 bg-amber-50 border border-amber-200'
-                        : 'text-slate-800'
-                    }`}>
-                      {bio.result} {bio.unit}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center text-slate-500">{bio.conventionalRef}</td>
-                  <td className="py-3 px-4 text-center font-semibold text-blue-700 bg-blue-50/40">
-                    {bio.functionalTarget}
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                      bio.status === 'critico' 
-                        ? 'bg-rose-100 text-rose-800' 
-                        : bio.status === 'alerta' 
-                        ? 'bg-amber-100 text-amber-800' 
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {bio.interpretation}
-                    </span>
+              {biomarkers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                    <p className="font-medium text-slate-600 mb-1">Nenhum exame laboratorial importado para este paciente.</p>
+                    <p className="text-[11px] text-slate-400">Clique em "Abrir Leitor / Fazer Upload OCR" para carregar laudos em PDF/imagem ou registrar biomarcadores.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                biomarkers.map((bio) => (
+                  <tr key={bio.id} className="hover:bg-slate-50/70 transition">
+                    <td className="py-3 px-4 font-semibold text-slate-800 flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${
+                        bio.status === 'critico' ? 'bg-rose-600' : bio.status === 'alerta' ? 'bg-amber-500' : 'bg-emerald-500'
+                      }`} />
+                      {bio.name}
+                    </td>
+                    <td className="py-3 px-4 text-center font-bold text-slate-900">
+                      <span className={`px-2 py-0.5 rounded text-xs ${
+                        bio.status === 'critico' 
+                          ? 'text-rose-700 bg-rose-50 border border-rose-200' 
+                          : bio.status === 'alerta'
+                          ? 'text-amber-800 bg-amber-50 border border-amber-200'
+                          : 'text-slate-800'
+                      }`}>
+                        {bio.result} {bio.unit}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center text-slate-500">{bio.conventionalRef}</td>
+                    <td className="py-3 px-4 text-center font-semibold text-blue-700 bg-blue-50/40">
+                      {bio.functionalTarget}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                        bio.status === 'critico' 
+                          ? 'bg-rose-100 text-rose-800' 
+                          : bio.status === 'alerta' 
+                          ? 'bg-amber-100 text-amber-800' 
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        {bio.interpretation}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
