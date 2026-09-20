@@ -1,9 +1,27 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Check, Send, FileText, Smartphone, Camera, Bell, MessageSquare, Bot, Sparkles, AlertCircle, RefreshCw, Eye, Download } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Check, 
+  Send, 
+  FileText, 
+  Smartphone, 
+  Camera, 
+  Bell, 
+  MessageSquare, 
+  Bot, 
+  Sparkles, 
+  AlertCircle, 
+  RefreshCw, 
+  Eye, 
+  Download,
+  ExternalLink,
+  Loader2
+} from 'lucide-react';
 import { ComplianceChecklist, PatientContextPayload, MealPlanPdfExport } from '../../types';
 import { AIConversationalEngineModal } from '../diet/AIConversationalEngineModal';
 import { MealPlanPdfModal } from '../diet/MealPlanPdfModal';
 import { SendHistoryCard } from '../diet/SendHistoryCard';
+import { dispatchPlanToWhatsApp, generateDirectWhatsAppUrl, SendPlanResult } from '../../services/whatsappService';
 
 interface FinalizacaoViewProps {
   compliance: ComplianceChecklist;
@@ -21,18 +39,29 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
   onRecordPdfSent
 }) => {
   const [dispatched, setDispatched] = useState(false);
+  const [isDispatching, setIsDispatching] = useState(false);
+  const [dispatchResult, setDispatchResult] = useState<SendPlanResult | null>(null);
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+
+  const patientName = patientContext?.patient?.name || 'Manuela Silveira';
+  const firstName = patientName.split(' ')[0];
+  const patientGoal = patientContext?.patient?.goal || 'Hipertrofia';
+  const targetKcal = patientContext?.patient?.targetKcal || 2100;
+  const targetPtn = patientContext?.patient?.targetPtn || 140;
+  const hydration = patientContext?.patient?.weight 
+    ? Math.round(patientContext.patient.weight * 35 / 100) / 10 
+    : 2.8;
 
   // Histórico local inicializado com o envio oficial
   const [internalHistory, setInternalHistory] = useState<MealPlanPdfExport[]>([
     {
       id: 'pdf-1',
       version: 'v1.0',
-      title: `Plano_Alimentar_Hipertrofia_${patientContext?.patient?.name?.replace(/\s+/g, '_') || 'Paciente'}.pdf`,
+      title: `Plano_Alimentar_${patientGoal.replace(/\s+/g, '_')}_${patientName.replace(/\s+/g, '_')}.pdf`,
       patientId: patientContext?.patient?.id || 'pat-1',
-      patientName: patientContext?.patient?.name || 'Manuela Silveira',
-      targetKcal: patientContext?.patient?.targetKcal || 2100,
+      patientName: patientName,
+      targetKcal: targetKcal,
       mealsCount: patientContext?.meals?.length || 4,
       generatedAt: '18/09/2026 às 12:45',
       fileSizeKb: 2420,
@@ -46,18 +75,39 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
 
   const currentHistory = externalPdfHistory || internalHistory;
 
-  const handleDispatch = () => {
-    setDispatched(true);
-    onDispatchWhatsApp();
+  const handleDispatch = async () => {
+    setIsDispatching(true);
+
+    try {
+      const result = await dispatchPlanToWhatsApp({
+        patientId: patientContext?.patient?.id || 'pat-1',
+        patientName: patientName,
+        patientPhone: patientContext?.patient?.phone || '5511987654321',
+        nutritionistName: 'Dra. Maithe Ferreira',
+        clinicName: 'TalkNutri Saúde Integrada',
+        targetKcal,
+        targetPtn,
+        hydrationLiters: hydration,
+        pdfUrl: `https://talknutri.com.br/pdf/plano_${patientContext?.patient?.id || 'pat1'}.pdf`
+      });
+
+      setDispatchResult(result);
+    } catch (e) {
+      console.warn('Erro ao disparar via WhatsApp:', e);
+    } finally {
+      setIsDispatching(false);
+      setDispatched(true);
+      onDispatchWhatsApp();
+    }
 
     // Adiciona ao histórico caso ainda não tenha
     const newRecord: MealPlanPdfExport = {
       id: `pdf-${Date.now()}`,
       version: `v1.${currentHistory.length + 1}`,
-      title: `Plano_Alimentar_${patientContext?.patient?.name?.replace(/\s+/g, '_') || 'Paciente'}_Oficial.pdf`,
+      title: `Plano_Alimentar_${patientName.replace(/\s+/g, '_')}_Oficial.pdf`,
       patientId: patientContext?.patient?.id || 'pat-1',
-      patientName: patientContext?.patient?.name || 'Manuela Silveira',
-      targetKcal: patientContext?.patient?.targetKcal || 2100,
+      patientName: patientName,
+      targetKcal: targetKcal,
       mealsCount: patientContext?.meals?.length || 4,
       generatedAt: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       fileSizeKb: 2420,
@@ -83,6 +133,11 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
     }
   };
 
+  const directWaUrl = dispatchResult?.directWhatsAppUrl || generateDirectWhatsAppUrl(
+    patientContext?.patient?.phone || '5511987654321',
+    `Olá, ${firstName}! Aqui é a equipe da Dra. Maithe. Seu Plano Alimentar de ${targetKcal} kcal está ativado no seu WhatsApp Zero-App! 🌱`
+  );
+
   return (
     <div id="finalizacao-view" className="p-6 md:p-8 space-y-6 max-w-6xl mx-auto animate-fade-in">
       {/* 1. Header de Status & Disparo */}
@@ -99,7 +154,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-600 mt-0.5">
-              A paciente receberá a dieta estruturada em PDF, lembretes inteligentes e o Motor Conversacional de IA ativado no WhatsApp.
+              A paciente {patientName} receberá a dieta estruturada em PDF, metas de {targetKcal} kcal e o Motor Conversacional de IA ativado no WhatsApp.
             </p>
           </div>
         </div>
@@ -119,7 +174,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
           {patientContext && (
             <button
               onClick={() => setIsAIModalOpen(true)}
-              className="px-4 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 bg-slate-900 hover:bg-black text-white shadow-xs transition"
+              className="px-4 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 bg-slate-900 hover:bg-black text-white shadow-xs transition cursor-pointer"
             >
               <Bot className="w-4 h-4 text-emerald-400" />
               <span>Testar Motor de IA</span>
@@ -129,15 +184,38 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
           <button
             id="btn-dispatch-whatsapp"
             onClick={handleDispatch}
-            className={`px-6 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-xs transition ${
+            disabled={isDispatching}
+            className={`px-6 py-2.5 rounded-full text-xs font-bold flex items-center gap-2 shadow-xs transition cursor-pointer ${
               dispatched
-                ? 'bg-emerald-700 text-white cursor-default'
+                ? 'bg-emerald-700 text-white'
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white'
             }`}
           >
-            <Send className="w-4 h-4" />
-            <span>{dispatched ? 'Plano Disparado com Sucesso!' : 'Finalizar Consulta e Disparar WhatsApp'}</span>
+            {isDispatching ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Transmitindo via WhatsApp...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>{dispatched ? 'Plano Disparado com Sucesso!' : 'Finalizar Consulta e Disparar WhatsApp'}</span>
+              </>
+            )}
           </button>
+
+          {dispatched && (
+            <a
+              href={directWaUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="px-4 py-2.5 rounded-full text-xs font-bold flex items-center gap-1.5 bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-300 shadow-2xs transition"
+              title="Abrir diretamente conversa no WhatsApp Web"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Abrir WhatsApp Web</span>
+            </a>
+          )}
         </div>
       </div>
 
@@ -299,9 +377,9 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
 
                 {/* Mensagem 1: Envio do PDF */}
                 <div className="bg-white rounded-2xl rounded-tl-xs p-3 shadow-xs max-w-[90%] space-y-2">
-                  <p className="font-semibold text-slate-800">Olá, Manuela! Tudo bem? 😊</p>
+                  <p className="font-semibold text-slate-800">Olá, {firstName}! Tudo bem? 😊</p>
                   <p className="text-slate-600">
-                    Seu plano alimentar focado em <strong>Hipertrofia</strong> já está ativo! Sem necessidade de baixar nenhum app, você pode falar diretamente comigo por aqui.
+                    Seu plano alimentar de <strong>{targetKcal} kcal</strong> focado em <strong>{patientGoal}</strong> já está ativo! Sem necessidade de baixar nenhum app, você pode falar diretamente comigo por aqui.
                   </p>
                   <div 
                     onClick={() => setIsPdfModalOpen(true)}
@@ -314,7 +392,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
                       </div>
                       <div className="overflow-hidden">
                         <div className="font-bold text-slate-800 truncate text-[11px] group-hover:text-emerald-800">
-                          Plano_Manuela_2026.pdf
+                          Plano_{firstName}_2026.pdf
                         </div>
                         <div className="text-[9px] text-slate-400">2.4 MB • Prescrição Oficial CFN</div>
                       </div>
@@ -339,7 +417,7 @@ export const FinalizacaoView: React.FC<FinalizacaoViewProps> = ({
                     <span>COPILOTO CLÍNICO HiGHS</span>
                   </div>
                   <p className="text-slate-700">
-                    Pode sim, Manuela! Para manter suas <strong>40g de proteína e leucina ideais (3.2g)</strong> do almoço:
+                    Pode sim, {firstName}! Para manter suas <strong>40g de proteína e leucina ideais (3.2g)</strong> do almoço:
                   </p>
                   <div className="space-y-1 bg-slate-50 p-2 rounded-xl border border-slate-200 text-slate-800">
                     <div>🥩 <strong>Opção 1:</strong> 140g de Patinho Moído</div>

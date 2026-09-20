@@ -767,66 +767,111 @@ export const AvaliacaoFisicaView: React.FC<AvaliacaoFisicaViewProps> = ({
           <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50">
             <div className="px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700">1. Eixo Anterior</span>
-              <span className="text-[10px] text-slate-500">15/09/2026</span>
+              <span className="text-[10px] text-slate-500">{initialComposition.posturalPhotos?.date || '15/09/2026'}</span>
             </div>
             <div className="h-44 bg-slate-900 flex items-center justify-center relative group overflow-hidden">
-              <img 
-                src={initialComposition.posturalPhotos.anteriorUrl} 
-                alt="Registro Anterior" 
-                className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
-              />
-              <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <span className="text-xs text-white font-semibold flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
-                </span>
-              </div>
+              {initialComposition.posturalPhotos?.anteriorUrl ? (
+                <>
+                  <img 
+                    src={initialComposition.posturalPhotos.anteriorUrl} 
+                    alt="Registro Anterior" 
+                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <span className="text-xs text-white font-semibold flex items-center gap-1">
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center mb-2">
+                    <Camera className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300">Sem Registro Fotográfico</span>
+                  <span className="text-[10px] text-slate-500 mt-0.5">Captura com proteção AES-256</span>
+                </div>
+              )}
             </div>
             <div className="p-2.5 text-[11px] text-slate-600 text-center font-medium">
-              Alinhamento escapular e simetria abdominal preservados.
+              {initialComposition.posturalPhotos?.anteriorUrl 
+                ? 'Alinhamento escapular e simetria abdominal preservados.'
+                : 'Aguardando registro ou upload de foto postural anterior.'}
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50">
             <div className="px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700">2. Eixo Lateral (Direito)</span>
-              <span className="text-[10px] text-slate-500">15/09/2026</span>
+              <span className="text-[10px] text-slate-500">{initialComposition.posturalPhotos?.date || '15/09/2026'}</span>
             </div>
             <div className="h-44 bg-slate-900 flex items-center justify-center relative group overflow-hidden">
-              <img 
-                src={initialComposition.posturalPhotos.lateralUrl} 
-                alt="Registro Lateral" 
-                className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
-              />
-              <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <span className="text-xs text-white font-semibold flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
-                </span>
-              </div>
+              {initialComposition.posturalPhotos?.lateralUrl ? (
+                <>
+                  <img 
+                    src={initialComposition.posturalPhotos.lateralUrl} 
+                    alt="Registro Lateral" 
+                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <span className="text-xs text-white font-semibold flex items-center gap-1">
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center mb-2">
+                    <Camera className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300">Sem Registro Fotográfico</span>
+                  <span className="text-[10px] text-slate-500 mt-0.5">Captura com proteção AES-256</span>
+                </div>
+              )}
             </div>
             <div className="p-2.5 text-[11px] text-slate-600 text-center font-medium">
-              Curvatura lombar fisiológica, sem hiperlordose aparente.
+              {initialComposition.posturalPhotos?.lateralUrl 
+                ? 'Curvatura lombar fisiológica, sem hiperlordose aparente.'
+                : 'Aguardando registro ou upload de foto postural lateral.'}
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50">
             <div className="px-3 py-2 bg-slate-100 border-b border-slate-200 flex items-center justify-between text-xs">
               <span className="font-bold text-slate-700">3. Eixo Posterior</span>
-              <span className="text-[10px] text-slate-500">15/09/2026</span>
+              <span className="text-[10px] text-slate-500">{initialComposition.posturalPhotos?.date || '15/09/2026'}</span>
             </div>
             <div className="h-44 bg-slate-900 flex items-center justify-center relative group overflow-hidden">
-              <img 
-                src={initialComposition.posturalPhotos.posteriorUrl} 
-                alt="Registro Posterior" 
-                className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
-              />
-              <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                <span className="text-xs text-white font-semibold flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
-                </span>
-              </div>
+              {initialComposition.posturalPhotos?.posteriorUrl ? (
+                <>
+                  <img 
+                    src={initialComposition.posturalPhotos.posteriorUrl} 
+                    alt="Registro Posterior" 
+                    className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition duration-300"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-slate-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
+                    <span className="text-xs text-white font-semibold flex items-center gap-1">
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" /> AES-256 Protegido
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center p-4 text-center">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700/60 flex items-center justify-center mb-2">
+                    <Camera className="w-5 h-5 text-slate-400" />
+                  </div>
+                  <span className="text-xs font-semibold text-slate-300">Sem Registro Fotográfico</span>
+                  <span className="text-[10px] text-slate-500 mt-0.5">Captura com proteção AES-256</span>
+                </div>
+              )}
             </div>
             <div className="p-2.5 text-[11px] text-slate-600 text-center font-medium">
-              Densidade muscular dorsal e trapézio superior com tônus elevado.
+              {initialComposition.posturalPhotos?.posteriorUrl 
+                ? 'Densidade muscular dorsal e trapézio superior com tônus elevado.'
+                : 'Aguardando registro ou upload de foto postural posterior.'}
             </div>
           </div>
         </div>

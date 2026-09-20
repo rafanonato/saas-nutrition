@@ -714,7 +714,7 @@ export const ConsultationAudioRecordingModal: React.FC<ConsultationAudioRecordin
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-3 md:p-6 animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden">
         {/* Elemento de Áudio Oculto para Reprodução Real */}
-        {recordedAudioUrl && (
+        {recordedAudioUrl && recordedAudioUrl.trim() !== '' ? (
           <audio 
             ref={audioPlayerRef} 
             src={recordedAudioUrl} 
@@ -726,7 +726,7 @@ export const ConsultationAudioRecordingModal: React.FC<ConsultationAudioRecordin
               }
             }}
           />
-        )}
+        ) : null}
 
         {/* Top Header com Identificação do Paciente */}
         <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800 shrink-0">

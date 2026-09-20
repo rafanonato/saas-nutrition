@@ -1064,6 +1064,406 @@ Responda APENAS com um objeto JSON estrito (sem delimitadores markdown):
   }
 });
 
+// =========================================================================
+// MÓDULO CONVERSACIONAL ZERO-APP: WHATSAPP BUSINESS CLOUD API & SIMULAÇÃO
+// =========================================================================
+
+interface ServerWhatsAppRecord {
+  id: string;
+  patientPhone: string;
+  patientName?: string;
+  sender: 'patient' | 'assistant' | 'nutritionist' | 'system';
+  text: string;
+  timestamp: string;
+  timeFormatted: string;
+  status: 'enviado' | 'entregue' | 'lido' | 'falha';
+  mediaUrl?: string;
+  mediaType?: 'image' | 'audio' | 'pdf';
+  hasAlert?: boolean;
+  alertReason?: string;
+}
+
+// Histórico em memória no servidor para consultas clínicas ativas
+const serverWhatsAppMessages: ServerWhatsAppRecord[] = [
+  {
+    id: 'wa-msg-1',
+    patientPhone: '5511987654321',
+    patientName: 'Fernanda Oliveira',
+    sender: 'system',
+    text: '🌱 Plano Alimentar de 2.100 kcal homologado com conformidade CFN nº 856/2026 e transmitido com sucesso.',
+    timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+    timeFormatted: '10:00',
+    status: 'lido'
+  },
+  {
+    id: 'wa-msg-2',
+    patientPhone: '5511987654321',
+    patientName: 'Fernanda Oliveira',
+    sender: 'assistant',
+    text: 'Olá, Fernanda! Sou a assistente oficial da Dra. Maithe. Seu plano de 2.100 kcal está ativo no seu WhatsApp! Meta de hidratação hoje: 2,8 Litros. Pode me mandar dúvidas e fotos dos seus pratos por aqui! 🥗✨',
+    timestamp: new Date(Date.now() - 3600000 * 2 + 10000).toISOString(),
+    timeFormatted: '10:00',
+    status: 'lido'
+  },
+  {
+    id: 'wa-msg-3',
+    patientPhone: '5511987654321',
+    patientName: 'Fernanda Oliveira',
+    sender: 'patient',
+    text: 'Dra, não encontrei filé de frango no mercado hoje. Posso trocar pelo patinho moído no almoço?',
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    timeFormatted: '11:30',
+    status: 'lido'
+  },
+  {
+    id: 'wa-msg-4',
+    patientPhone: '5511987654321',
+    patientName: 'Fernanda Oliveira',
+    sender: 'assistant',
+    text: 'Pode sim, Fernanda! Para manter exatamente as suas 40g de proteína e o limiar de leucina (3.2g) prescritos: substitua 150g de frango por 140g de patinho moído ou 3 ovos inteiros + 2 claras. A equivalência calórica de ~240 kcal é mantida perfeitamente! 🥩',
+    timestamp: new Date(Date.now() - 3600000 + 15000).toISOString(),
+    timeFormatted: '11:31',
+    status: 'lido'
+  }
+];
+
+/**
+ * Função utilitária para envio real via Meta WhatsApp Cloud API
+ */
+async function sendMetaWhatsAppMessage(to: string, messageText: string): Promise<{ success: boolean; data?: any; error?: string; mode: 'meta_cloud' | 'simulated' }> {
+  const token = process.env.WHATSAPP_API_TOKEN;
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
+
+  const cleanPhone = to.replace(/\D/g, '');
+
+  if (token && phoneNumberId) {
+    try {
+      const response = await fetch(`https://graph.facebook.com/v21.0/${phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to: cleanPhone,
+          type: 'text',
+          text: {
+            preview_url: true,
+            body: messageText
+          }
+        })
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        console.warn('[Meta WhatsApp API Error]:', responseData);
+        return {
+          success: false,
+          error: responseData?.error?.message || 'Falha ao enviar via Meta Cloud API',
+          mode: 'meta_cloud',
+          data: responseData
+        };
+      }
+
+      return {
+        success: true,
+        data: responseData,
+        mode: 'meta_cloud'
+      };
+    } catch (err: any) {
+      console.warn('[Meta WhatsApp Network Error]:', err.message);
+      return {
+        success: false,
+        error: err.message,
+        mode: 'meta_cloud'
+      };
+    }
+  }
+
+  // Modo Simulação Resiliente para desenvolvimento ou teste local
+  console.info(`[WhatsApp Zero-App Simulado] Mensagem enviada para ${cleanPhone}: "${messageText.slice(0, 60)}..."`);
+  return {
+    success: true,
+    mode: 'simulated'
+  };
+}
+
+/**
+ * GET /api/whatsapp/status
+ * Retorna a configuração e prontidão da camada WhatsApp
+ */
+app.get("/api/whatsapp/status", (req, res) => {
+  const isTokenConfigured = Boolean(process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_API_TOKEN.trim());
+  const isPhoneIdConfigured = Boolean(process.env.WHATSAPP_PHONE_NUMBER_ID && process.env.WHATSAPP_PHONE_NUMBER_ID.trim());
+  const configured = isTokenConfigured && isPhoneIdConfigured;
+
+  const alerts = serverWhatsAppMessages.filter(m => m.hasAlert).length;
+
+  return res.json({
+    configured,
+    provider: configured ? 'meta_cloud' : 'simulation_mode',
+    phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || null,
+    verifyTokenSet: Boolean(process.env.WHATSAPP_VERIFY_TOKEN),
+    webhookUrl: `/api/whatsapp/webhook`,
+    totalMessages: serverWhatsAppMessages.length,
+    activeAlertsCount: alerts,
+    geminiConnected: Boolean(process.env.GEMINI_API_KEY)
+  });
+});
+
+/**
+ * GET /api/whatsapp/webhook
+ * Verificação de Handshake exigida pela Meta (hub.mode, hub.verify_token, hub.challenge)
+ */
+app.get("/api/whatsapp/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN || "talknutri_secure_webhook_2026";
+
+  if (mode === "subscribe" && token === expectedToken) {
+    console.info("[WhatsApp Webhook] Handshake verificado com sucesso pela Meta!");
+    return res.status(200).send(challenge);
+  }
+
+  console.warn("[WhatsApp Webhook] Token de verificação inválido recebido.");
+  return res.sendStatus(403);
+});
+
+/**
+ * POST /api/whatsapp/webhook
+ * Recepção contínua de mensagens enviadas pelo paciente no WhatsApp
+ */
+app.post("/api/whatsapp/webhook", async (req, res) => {
+  try {
+    const body = req.body;
+
+    // Resposta imediata de 200 OK para a Meta não reenviar a requisição
+    res.sendStatus(200);
+
+    if (body.object === "whatsapp_business_account" || body.entry) {
+      const entry = body.entry?.[0];
+      const changes = entry?.changes?.[0];
+      const value = changes?.value;
+      const messages = value?.messages;
+
+      if (messages && messages.length > 0) {
+        for (const message of messages) {
+          const from = message.from; // Número de telefone do remetente
+          const messageId = message.id;
+          const timestamp = new Date().toISOString();
+          const timeFormatted = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+          let incomingText = "";
+          let isImage = false;
+
+          if (message.type === "text") {
+            incomingText = message.text?.body || "";
+          } else if (message.type === "image") {
+            isImage = true;
+            incomingText = message.image?.caption || "Foto do prato enviada";
+          } else if (message.type === "audio") {
+            incomingText = "Áudio recebido do paciente";
+          }
+
+          // Registrar mensagem do paciente no histórico do prontuário
+          serverWhatsAppMessages.push({
+            id: `in-${messageId || Date.now()}`,
+            patientPhone: from,
+            sender: 'patient',
+            text: incomingText,
+            timestamp,
+            timeFormatted,
+            status: 'lido',
+            mediaType: isImage ? 'image' : undefined
+          });
+
+          // Processar resposta clínica com IA
+          const contextSimulated = {
+            patient: { name: "Paciente", targetKcal: 2100, goal: "Hipertrofia" },
+            anamnese: { aversions: ["batata-doce"] }
+          };
+
+          const ai = getGeminiClient();
+          let replyText = "";
+
+          if (ai && incomingText) {
+            try {
+              const systemPrompt = `
+Você é a Assistente Oficial da Dra. Maithe (CRN-3 / 48.912) no WhatsApp Zero-App.
+Metas clínicas do paciente: 2.100 kcal | 140g Proteína | 2.8L água | Aversão severa: batata-doce.
+Responda sempre com tom acolhedor, profissional e direto para o WhatsApp.
+Se o paciente pedir substituição, calcule gramaturas que preservem calorias e proteínas.
+              `.trim();
+              replyText = await callGeminiWithResilience(ai, systemPrompt, incomingText);
+            } catch (e) {
+              const fb = generateClinicalFallback(incomingText, contextSimulated, isImage);
+              replyText = fb.replyText;
+            }
+          } else {
+            const fb = generateClinicalFallback(incomingText, contextSimulated, isImage);
+            replyText = fb.replyText;
+          }
+
+          // Enviar resposta de volta ao paciente no WhatsApp
+          await sendMetaWhatsAppMessage(from, replyText);
+
+          // Salvar resposta no histórico
+          serverWhatsAppMessages.push({
+            id: `out-reply-${Date.now()}`,
+            patientPhone: from,
+            sender: 'assistant',
+            text: replyText,
+            timestamp: new Date().toISOString(),
+            timeFormatted: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            status: 'entregue'
+          });
+        }
+      }
+    }
+  } catch (err: any) {
+    console.warn("[WhatsApp Webhook Processing Error]:", err);
+  }
+});
+
+/**
+ * POST /api/whatsapp/send-plan
+ * Dispara o plano alimentar estruturado diretamente para o WhatsApp do paciente
+ */
+app.post("/api/whatsapp/send-plan", async (req, res) => {
+  try {
+    const { 
+      patientName, 
+      patientPhone, 
+      nutritionistName = "Dra. Maithe Ferreira", 
+      clinicName = "TalkNutri Saúde Integrada",
+      targetKcal = 2100,
+      targetPtn = 140,
+      hydrationLiters = 2.8,
+      pdfUrl
+    } = req.body;
+
+    if (!patientPhone) {
+      return res.status(400).json({ error: "Telefone do paciente é obrigatório." });
+    }
+
+    const cleanPhone = (patientPhone || "").replace(/\D/g, "");
+    const firstName = (patientName || "Paciente").split(" ")[0];
+
+    const messageText = `🥗 Olá, ${firstName}! Aqui é a equipe da ${nutritionistName} (${clinicName}).\n\nSeu Plano Alimentar personalizado está pronto e ativado no seu WhatsApp Zero-App!\n\n🎯 *Meta Diária:* ${targetKcal} kcal | ${targetPtn}g de Proteína\n💧 *Hidratação Calculada:* ${hydrationLiters} Litros por dia\n${pdfUrl ? `📄 *Seu PDF Clínico:* ${pdfUrl}\n` : ''}\nA partir de agora, você não precisa instalar nenhum app. Pode me mandar fotos dos seus pratos para micro-checkin ou dúvidas de substituições por texto e áudio a qualquer momento! ✨`;
+
+    const dispatchResult = await sendMetaWhatsAppMessage(cleanPhone, messageText);
+
+    const now = new Date();
+    const timeFormatted = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const newRecord: ServerWhatsAppRecord = {
+      id: `plan-dispatch-${Date.now()}`,
+      patientPhone: cleanPhone,
+      patientName,
+      sender: 'system',
+      text: messageText,
+      timestamp: now.toISOString(),
+      timeFormatted,
+      status: dispatchResult.success ? 'entregue' : 'falha',
+      mediaType: 'pdf'
+    };
+
+    serverWhatsAppMessages.push(newRecord);
+
+    const directUrl = `https://wa.me/${cleanPhone.length <= 11 ? '55' + cleanPhone : cleanPhone}?text=${encodeURIComponent(messageText)}`;
+
+    return res.json({
+      success: true,
+      messageId: newRecord.id,
+      timestamp: newRecord.timestamp,
+      previewText: messageText,
+      directWhatsAppUrl: directUrl,
+      mode: dispatchResult.mode,
+      status: newRecord.status
+    });
+
+  } catch (error: any) {
+    console.warn("[Send Plan Error]:", error);
+    return res.status(500).json({
+      error: "Falha ao disparar plano para o WhatsApp",
+      details: error?.message
+    });
+  }
+});
+
+/**
+ * POST /api/whatsapp/test-message
+ * Permite à nutricionista testar o envio de WhatsApp para seu próprio celular
+ */
+app.post("/api/whatsapp/test-message", async (req, res) => {
+  try {
+    const { targetPhone, customMessage } = req.body;
+
+    if (!targetPhone) {
+      return res.status(400).json({ error: "Telefone de destino é obrigatório." });
+    }
+
+    const cleanPhone = targetPhone.replace(/\D/g, "");
+    const formattedPhone = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone;
+
+    const testBody = customMessage || `🥗 TalkNutri Zero-App: Teste de conexão do WhatsApp verificado com sucesso! Canal clínico ativo com conformidade CFN nº 856/2026.`;
+
+    const result = await sendMetaWhatsAppMessage(formattedPhone, testBody);
+
+    const directUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(testBody)}`;
+
+    // Registrar no histórico de testes
+    serverWhatsAppMessages.push({
+      id: `test-${Date.now()}`,
+      patientPhone: formattedPhone,
+      sender: 'assistant',
+      text: testBody,
+      timestamp: new Date().toISOString(),
+      timeFormatted: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      status: result.success ? 'entregue' : 'falha'
+    });
+
+    return res.json({
+      success: result.success,
+      message: result.success ? "Mensagem transmitida com sucesso!" : (result.error || "Falha ao enviar"),
+      targetPhone: formattedPhone,
+      mode: result.mode,
+      directWhatsAppUrl: directUrl,
+      debug: {
+        configured: Boolean(process.env.WHATSAPP_API_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
+        phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID || null
+      }
+    });
+
+  } catch (error: any) {
+    console.warn("[Test WhatsApp Message Error]:", error);
+    return res.status(500).json({
+      error: "Falha ao enviar mensagem de teste",
+      details: error?.message
+    });
+  }
+});
+
+/**
+ * GET /api/whatsapp/history
+ * Retorna as mensagens registradas da integração
+ */
+app.get("/api/whatsapp/history", (req, res) => {
+  const phone = req.query.phone as string | undefined;
+
+  if (phone) {
+    const cleanPhone = phone.replace(/\D/g, "");
+    const filtered = serverWhatsAppMessages.filter(m => m.patientPhone.includes(cleanPhone));
+    return res.json({ messages: filtered });
+  }
+
+  return res.json({ messages: serverWhatsAppMessages.slice(-50) });
+});
+
 // Setup do Vite Middleware para Desenvolvimento e Produção
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
